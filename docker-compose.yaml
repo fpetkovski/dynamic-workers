@@ -1,0 +1,22 @@
+version: "2"
+services:
+  go:
+    image: golang:1.13
+    volumes:
+      - ./:/code
+    entrypoint:
+      - sleep
+      - "86400"
+    working_dir: /code
+
+  beanstalkd:
+    image: schickling/beanstalkd
+    ports:
+      - 11300:11300
+
+  beanstalkd-console:
+    image: schickling/beanstalkd-console
+    ports:
+      - 2080:2080
+    environment:
+      BEANSTALK_SERVERS: "beanstalkd:11300"

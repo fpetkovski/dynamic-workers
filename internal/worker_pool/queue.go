@@ -17,3 +17,7 @@ func (q *queue) Enqueue(job Job) {
 func (q *queue) Dequeue() <-chan Job {
 	return q.queue
 }
+
+func (q *queue) Close() {
+	close(q.queue)
+}

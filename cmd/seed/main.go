@@ -10,7 +10,7 @@ func main() {
 
 	connection, _ := beanstalk.Dial("tcp", "127.0.0.1:11300")
 	for i := 1; i <= 10; i++ {
-		for j := 0; j < 100; j++ {
+		for j := 0; j < 20; j++ {
 			tube := fmt.Sprintf("tube-%d", i)
 			message := fmt.Sprintf("hello from %s, message %d", tube, j)
 			putInTube(connection, tube, message)

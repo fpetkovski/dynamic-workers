@@ -1,42 +1,47 @@
 package worker_pool_test
 
 import (
-	"context"
 	"fpetkovski/worker_pool/internal/worker_pool"
 	log "github.com/sirupsen/logrus"
+	"sync"
 	"testing"
-	"time"
 )
 
+
+var mux sync.Mutex
+
 type jobStub struct {
+	index   int
 	counter *int
 }
 
 func (stub jobStub) Execute() error {
+	defer mux.Unlock()
+	mux.Lock()
+
 	*stub.counter += 1
 	return nil
 }
 
 func (stub jobStub) GetId() uint64 {
-	return 1
+	return uint64(stub.index)
 }
 
 func TestPool_Start_ShouldGracefullyShutDown(t *testing.T) {
 	log.SetLevel(log.DebugLevel)
+	counter := 0
+	mux = sync.Mutex{}
 
 	numberOfJobs := 10
-	counter := 0
 
 	pool := makePool(2, numberOfJobs)
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-	go pool.Start(ctx)
+	go pool.Start()
 
 	for i := 0; i < numberOfJobs; i++ {
-		job := &jobStub{&counter}
-		pool.AddJob(job)
+		pool.AddJob(&jobStub{i, &counter})
 	}
 
-	cancel()
+	pool.Close()
 	pool.Wait()
 
 	if counter != numberOfJobs {
@@ -45,8 +50,8 @@ func TestPool_Start_ShouldGracefullyShutDown(t *testing.T) {
 }
 
 func makePool(numberOfWorkers int, numberOfJobs int) worker_pool.WorkerPool {
-	doneChannel := make(chan<- uint64, numberOfJobs)
-	pool := worker_pool.NewWorkerPool(numberOfWorkers, doneChannel)
+	complete := func(uint64) {}
+	pool := worker_pool.NewWorkerPool(numberOfWorkers, complete)
 
 	return pool
 }

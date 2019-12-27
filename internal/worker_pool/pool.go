@@ -1,7 +1,6 @@
 package worker_pool
 
 import (
-	"context"
 	"sync"
 )
 
@@ -36,10 +35,14 @@ func (pool *pool) AddJob(job Job) {
 	pool.queue.Enqueue(job)
 }
 
-func (pool *pool) Start(ctx context.Context) {
+func (pool *pool) Start() {
 	for _, worker := range pool.workers {
-		go worker.Start(ctx, pool.wg.Done)
+		go worker.Start(pool.wg.Done)
 	}
+}
+
+func (pool *pool) Close() {
+	pool.queue.Close()
 }
 
 func (pool *pool) Wait() {
@@ -48,6 +51,7 @@ func (pool *pool) Wait() {
 
 type WorkerPool interface {
 	AddJob(job Job)
-	Start(ctx context.Context)
+	Start()
+	Close()
 	Wait()
 }

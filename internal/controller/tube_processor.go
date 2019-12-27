@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"context"
 	"fpetkovski/worker_pool/internal/beanstalkd_client"
 	"fpetkovski/worker_pool/internal/worker_pool"
 	"github.com/beanstalkd/go-beanstalk"
@@ -33,15 +32,14 @@ func newTubeProcessor(
 func (tubeProcessor tubeProcessor) process() {
 	log.Debugln("Starting tube processor")
 
-	ctx, cancel := context.WithCancel(context.Background())
 	concurrency := rand.Intn(3) + 1
 	workerPool := worker_pool.NewWorkerPool(concurrency, tubeProcessor.onComplete)
-	go workerPool.Start(ctx)
+	go workerPool.Start()
 
 	for {
 		err := tubeProcessor.feedJob(workerPool)
 		if err != nil {
-			tubeProcessor.stop(err, cancel)
+			tubeProcessor.stop(err)
 			workerPool.Wait()
 			return
 		}
@@ -65,9 +63,8 @@ func (tubeProcessor *tubeProcessor) onComplete(jobId uint64) {
 	tubeProcessor.beanstalkdClient.DeleteJob(jobId)
 }
 
-func (tubeProcessor tubeProcessor) stop(err error, cancel context.CancelFunc) {
+func (tubeProcessor tubeProcessor) stop(err error) {
 	log.Errorf("Error getting job from tube %s: %s", tubeProcessor.tube.Name, err.Error())
-
-	cancel()
+	
 	tubeProcessor.deregister()
 }

@@ -2,7 +2,6 @@ package beanstalkd_client
 
 import (
 	"github.com/beanstalkd/go-beanstalk"
-	"time"
 )
 
 type beanstalkdClient struct {
@@ -39,10 +38,8 @@ func removeItem(items []string, item string) []string {
 	return items
 }
 
-func (client beanstalkdClient) GetFromTube(tubeName string) (id uint64, body []byte, err error) {
-	tubeSet := beanstalk.NewTubeSet(client.connection, tubeName)
-
-	return tubeSet.Reserve(50 * time.Second)
+func (client beanstalkdClient) GetTubeSet(tubeName string) *beanstalk.TubeSet {
+	return beanstalk.NewTubeSet(client.connection, tubeName)
 }
 
 func (client beanstalkdClient) DeleteJob(jobId uint64) {
@@ -54,8 +51,6 @@ func (client beanstalkdClient) DeleteJob(jobId uint64) {
 
 type BeanstalkdClient interface {
 	GetTubes() []string
-
-	GetFromTube(tubeName string) (id uint64, body []byte, err error)
-
+	GetTubeSet(tubeName string) *beanstalk.TubeSet
 	DeleteJob(jobId uint64)
 }

@@ -4,32 +4,38 @@ import (
 	"context"
 	"fpetkovski/worker_pool/internal/beanstalkd_client"
 	"fpetkovski/worker_pool/internal/worker_pool"
+	"github.com/beanstalkd/go-beanstalk"
 	log "github.com/sirupsen/logrus"
+	"math/rand"
+	"time"
 )
 
 type deregisterFunc func()
 
 type tubeProcessor struct {
 	beanstalkdClient beanstalkd_client.BeanstalkdClient
-	tubeName         string
+	tube             *beanstalk.TubeSet
 	deregister       deregisterFunc
 }
 
 func newTubeProcessor(
 	beanstalkdClient beanstalkd_client.BeanstalkdClient,
-	tubeName string,
+	tubeSet *beanstalk.TubeSet,
 	deregister deregisterFunc,
 ) *tubeProcessor {
 	return &tubeProcessor{
 		beanstalkdClient: beanstalkdClient,
-		tubeName:         tubeName,
+		tube:             tubeSet,
 		deregister:       deregister,
 	}
 }
 
 func (tubeProcessor tubeProcessor) process() {
+	log.Debugln("Starting tube processor")
+
 	ctx, cancel := context.WithCancel(context.Background())
-	workerPool := worker_pool.NewWorkerPool(1, tubeProcessor.onComplete)
+	concurrency := rand.Intn(3) + 1
+	workerPool := worker_pool.NewWorkerPool(concurrency, tubeProcessor.onComplete)
 	go workerPool.Start(ctx)
 
 	for {
@@ -43,13 +49,13 @@ func (tubeProcessor tubeProcessor) process() {
 }
 
 func (tubeProcessor tubeProcessor) feedJob(workerPool worker_pool.WorkerPool) error {
-	log.Debugf("Getting job from tube %s", tubeProcessor.tubeName)
-	id, body, err := tubeProcessor.beanstalkdClient.GetFromTube(tubeProcessor.tubeName)
+	log.Debugf("Getting job from tube %s", tubeProcessor.tube.Name)
+	id, body, err := tubeProcessor.tube.Reserve(2 * time.Second)
 	if err != nil {
 		return err
 	}
 
-	log.Debugf("Adding job to pool %s", tubeProcessor.tubeName)
+	log.Debugf("Adding job to pool %s", tubeProcessor.tube.Name)
 	workerPool.AddJob(NewJob(id, body))
 	return nil
 }
@@ -60,7 +66,7 @@ func (tubeProcessor *tubeProcessor) onComplete(jobId uint64) {
 }
 
 func (tubeProcessor tubeProcessor) stop(err error, cancel context.CancelFunc) {
-	log.Errorf("Error getting job from tube %s: %s", tubeProcessor.tubeName, err.Error())
+	log.Errorf("Error getting job from tube %s: %s", tubeProcessor.tube.Name, err.Error())
 
 	cancel()
 	tubeProcessor.deregister()

@@ -26,9 +26,9 @@ func NewWorkerPool(concurrency int, completeFunc completeFunc) *pool {
 	wg.Add(concurrency)
 
 	return &pool{
-		queue:    jobQueue,
-		workers:  workers,
-		wg: wg,
+		queue:   jobQueue,
+		workers: workers,
+		wg:      wg,
 	}
 }
 

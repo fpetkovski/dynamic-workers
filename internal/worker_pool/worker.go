@@ -6,8 +6,8 @@ import (
 )
 
 type worker struct {
-	index    int
-	queue    *queue
+	index        int
+	queue        *queue
 	completeFunc completeFunc
 }
 
@@ -15,8 +15,8 @@ var workerIndex int
 
 func newWorker(queue *queue, completeFunc completeFunc) *worker {
 	worker := &worker{
-		index:    workerIndex,
-		queue:    queue,
+		index:        workerIndex,
+		queue:        queue,
 		completeFunc: completeFunc,
 	}
 

@@ -32,7 +32,7 @@ func (controller *controller) createNewProcessors(tubes []string) {
 	for _, tubeName := range tubes {
 		tubeProcessor := newTubeProcessor(
 			controller.beanstalkdClient,
-			tubeName,
+			controller.beanstalkdClient.GetTubeSet(tubeName),
 			controller.removeProcessor(tubeName),
 		)
 		controller.processorsBag.Add(tubeName, tubeProcessor)

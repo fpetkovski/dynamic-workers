@@ -21,7 +21,6 @@ func (stub jobStub) GetId() uint64 {
 	return 1
 }
 
-
 func TestPool_Start_ShouldGracefullyShutDown(t *testing.T) {
 	log.SetLevel(log.DebugLevel)
 
@@ -29,7 +28,7 @@ func TestPool_Start_ShouldGracefullyShutDown(t *testing.T) {
 	counter := 0
 
 	pool := makePool(2, numberOfJobs)
-	ctx, cancel := context.WithTimeout(context.Background(), 1 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	go pool.Start(ctx)
 
 	for i := 0; i < numberOfJobs; i++ {
@@ -45,7 +44,7 @@ func TestPool_Start_ShouldGracefullyShutDown(t *testing.T) {
 	}
 }
 
-func makePool(numberOfWorkers int, numberOfJobs int) (worker_pool.WorkerPool) {
+func makePool(numberOfWorkers int, numberOfJobs int) worker_pool.WorkerPool {
 	doneChannel := make(chan<- uint64, numberOfJobs)
 	pool := worker_pool.NewWorkerPool(numberOfWorkers, doneChannel)
 

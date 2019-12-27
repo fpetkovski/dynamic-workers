@@ -2,7 +2,6 @@ package controller
 
 import (
 	"github.com/sirupsen/logrus"
-	"time"
 )
 
 type job struct {
@@ -23,7 +22,7 @@ func (job job) GetId() uint64 {
 
 func (job job) Execute() error {
 	logrus.Infof("Executing job with id %d: %s\n", job.jobId, string(job.payload))
-	time.Sleep(3 * time.Second)
+	//time.Sleep(1 * time.Second)
 
 	return nil
 }

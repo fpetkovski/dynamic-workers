@@ -7,7 +7,6 @@ import (
 	"testing"
 )
 
-
 var mux sync.Mutex
 
 type jobStub struct {

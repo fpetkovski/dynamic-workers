@@ -1,47 +1,50 @@
 package controller
 
 import (
-	"fpetkovski/worker_pool/internal/beanstalkd_client"
 	"github.com/sirupsen/logrus"
 	"time"
 )
 
 type controller struct {
-	beanstalkdClient beanstalkd_client.BeanstalkdClient
-	processorsBag    *tubeProcessorBag
+	queueAdapter  QueueAdapter
+	processorsBag *queueProcessorSet
 }
 
-func NewController(client beanstalkd_client.BeanstalkdClient) *controller {
+func NewController(stats QueueAdapter) *controller {
 	return &controller{
-		beanstalkdClient: client,
-		processorsBag:    newTubeProcessorBag(),
+		queueAdapter:  stats,
+		processorsBag: newTubeProcessorBag(),
 	}
 }
 
 func (controller *controller) Loop() {
 	for {
-		logrus.Debugf("Processing tubes")
-		tubes := controller.beanstalkdClient.GetTubes()
+		logrus.Debugf("Processing queues")
+		tubes := controller.queueAdapter.GetQueues()
 		controller.createNewProcessors(tubes)
 
 		time.Sleep(1 * time.Second)
 	}
 }
 
-func (controller *controller) createNewProcessors(tubes []string) {
-	for _, tubeName := range tubes {
-		tubeProcessor := newTubeProcessor(
-			controller.beanstalkdClient,
-			controller.beanstalkdClient.GetTubeSet(tubeName),
-			controller.removeProcessor(tubeName),
+func (controller *controller) createNewProcessors(queueNames []string) {
+	for _, queueName := range queueNames {
+		jobCount := controller.queueAdapter.GetReadyJobCount(queueName)
+		if jobCount == 0 {
+			continue
+		}
+
+		tubeProcessor := newQueueProcessor(
+			newQueue(controller.queueAdapter, queueName),
+			controller.removeProcessor(queueName),
 		)
-		controller.processorsBag.Add(tubeName, tubeProcessor)
+		controller.processorsBag.Add(queueName, tubeProcessor)
 	}
 }
 
 func (controller *controller) removeProcessor(tubeName string) func() {
 	return func() {
-		logrus.Debugf("Deregistering processor %s", tubeName)
+		logrus.Debugf("Removing processor %s", tubeName)
 		controller.processorsBag.remove(tubeName)
 	}
 }

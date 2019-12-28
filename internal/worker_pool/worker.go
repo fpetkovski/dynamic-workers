@@ -6,13 +6,13 @@ import (
 
 type worker struct {
 	index        int
-	queue        *queue
+	queue        <-chan Job
 	completeFunc completeFunc
 }
 
 var workerIndex int
 
-func newWorker(queue *queue, completeFunc completeFunc) *worker {
+func newWorker(queue <-chan Job, completeFunc completeFunc) *worker {
 	worker := &worker{
 		index:        workerIndex,
 		queue:        queue,
@@ -28,7 +28,7 @@ func (worker worker) Start(done func()) {
 
 	log.Debugf("Starting worker %d", worker.index)
 
-	for job := range worker.queue.Dequeue() {
+	for job := range worker.queue {
 		log.Infof("Worker %d executing job %d", worker.index, job.GetId())
 
 		err := job.Execute()

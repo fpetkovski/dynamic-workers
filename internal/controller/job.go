@@ -2,27 +2,28 @@ package controller
 
 import (
 	"github.com/sirupsen/logrus"
+	"time"
 )
 
-type job struct {
+type Job struct {
 	jobId   uint64
 	payload []byte
 }
 
-func NewJob(id uint64, payload []byte) *job {
-	return &job{
+func NewJob(id uint64, payload []byte) *Job {
+	return &Job{
 		jobId:   id,
 		payload: payload,
 	}
 }
 
-func (job job) GetId() uint64 {
+func (job Job) GetId() uint64 {
 	return job.jobId
 }
 
-func (job job) Execute() error {
-	logrus.Infof("Executing job with id %d: %s\n", job.jobId, string(job.payload))
-	//time.Sleep(1 * time.Second)
+func (job Job) Execute() error {
+	logrus.Infof("Executing Job with id %d: %s\n", job.jobId, string(job.payload))
+	time.Sleep(1 * time.Second)
 
 	return nil
 }

@@ -5,18 +5,18 @@ import (
 	"sync"
 )
 
-type tubeProcessorBag struct {
+type queueProcessorSet struct {
 	mu         sync.Mutex
-	processors map[string]*tubeProcessor
+	processors map[string]*queueProcessor
 }
 
-func newTubeProcessorBag() *tubeProcessorBag {
-	return &tubeProcessorBag{
-		processors: make(map[string]*tubeProcessor),
+func newTubeProcessorBag() *queueProcessorSet {
+	return &queueProcessorSet{
+		processors: make(map[string]*queueProcessor),
 	}
 }
 
-func (bag *tubeProcessorBag) Add(name string, processor *tubeProcessor) {
+func (bag *queueProcessorSet) Add(name string, processor *queueProcessor) {
 	defer bag.mu.Unlock()
 	bag.mu.Lock()
 
@@ -29,7 +29,7 @@ func (bag *tubeProcessorBag) Add(name string, processor *tubeProcessor) {
 	go processor.process()
 }
 
-func (bag *tubeProcessorBag) remove(name string) {
+func (bag *queueProcessorSet) remove(name string) {
 	defer bag.mu.Unlock()
 	bag.mu.Lock()
 

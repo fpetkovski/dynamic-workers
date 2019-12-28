@@ -5,7 +5,7 @@ import (
 )
 
 type pool struct {
-	queue    *queue
+	queue    chan Job
 	workers  []*worker
 	doneJobs chan<- uint64
 	wg       sync.WaitGroup
@@ -14,7 +14,7 @@ type pool struct {
 type completeFunc func(uint64)
 
 func NewWorkerPool(concurrency int, completeFunc completeFunc) *pool {
-	jobQueue := NewJobQueue(concurrency)
+	jobQueue := make(chan Job, concurrency)
 
 	workers := make([]*worker, concurrency)
 	for i := 0; i < concurrency; i++ {
@@ -32,7 +32,7 @@ func NewWorkerPool(concurrency int, completeFunc completeFunc) *pool {
 }
 
 func (pool *pool) AddJob(job Job) {
-	pool.queue.Enqueue(job)
+	pool.queue <- job
 }
 
 func (pool *pool) Start() {
@@ -42,7 +42,7 @@ func (pool *pool) Start() {
 }
 
 func (pool *pool) Close() {
-	pool.queue.Close()
+	close(pool.queue)
 }
 
 func (pool *pool) Wait() {

@@ -42,9 +42,9 @@ func (controller *controller) createNewProcessors(queueNames []string) {
 	}
 }
 
-func (controller *controller) removeProcessor(tubeName string) func() {
+func (controller *controller) removeProcessor(queueName string) func() {
 	return func() {
-		logrus.Debugf("Removing processor %s", tubeName)
-		controller.processorsBag.remove(tubeName)
+		logrus.Debugf("Removing processor %s", queueName)
+		controller.processorsBag.remove(queueName)
 	}
 }

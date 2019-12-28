@@ -21,7 +21,7 @@ func newQueueProcessor(queue *queue, deregister deregisterFunc) *queueProcessor 
 }
 
 func (queueProcessor queueProcessor) process() {
-	log.Debugln("Starting tube processor")
+	log.Debugln("Starting queue processor")
 
 	concurrency := rand.Intn(10) + 1
 	workerPool := worker_pool.NewWorkerPool(concurrency, queueProcessor.onComplete)
@@ -38,7 +38,7 @@ func (queueProcessor queueProcessor) process() {
 }
 
 func (queueProcessor queueProcessor) feedJob(workerPool worker_pool.WorkerPool) error {
-	log.Debugf("Getting Job from tube %s", queueProcessor.queue.GetName())
+	log.Debugf("Getting Job from queue %s", queueProcessor.queue.GetName())
 	job, err := queueProcessor.queue.GetJob()
 
 	if err != nil {
@@ -56,7 +56,7 @@ func (queueProcessor *queueProcessor) onComplete(jobId uint64) {
 }
 
 func (queueProcessor queueProcessor) stop(err error) {
-	log.Errorf("Error getting Job from tube %s: %s", queueProcessor.queue.GetName(), err.Error())
+	log.Errorf("Error getting Job from queue %s: %s", queueProcessor.queue.GetName(), err.Error())
 
 	queueProcessor.deregister()
 }
